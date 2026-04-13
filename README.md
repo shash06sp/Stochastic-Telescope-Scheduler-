@@ -89,7 +89,7 @@ Tested over a 24-hour simulated horizon with heavy stochastic cloud fragmentatio
 * **Stochastic AI Yield:** 446
 * **Performance Delta:** **+9.6%**
 
-![Gantt Chart](Gantt.png) 
+![Gantt Chart](Gantt.PNG) 
 
 ---
 
