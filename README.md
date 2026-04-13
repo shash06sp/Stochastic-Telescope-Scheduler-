@@ -31,14 +31,42 @@ Let $w_i$ be the scientific priority weight of target $i$.
 Let $C_t \in \{0, 1\}$ be the stochastic weather state at time $t$, where $1$ is Clear and $0$ is Cloudy.
 
 The objective is to maximize the **Expected Value** ($\mathbb{E}[W]$) of the total scientific weight captured:
-$$\max \mathbb{E}[W] = \mathbb{E} \left[ \sum_{i \in N} \sum_{t \in T} w_i \cdot x_{i,t} \cdot C_t \right]$$
+
+$$
+\max \mathbb{E}[W] = \sum_{i \in N} \sum_{t \in T} w_i \cdot x_{i,t} \cdot C_t
+$$
 
 **Subject to Constraints:**
-1. **Temporal Non-Overlap:** $\sum_{i} \sum_{t' \in [t - d_i + 1, t]} x_{i,t'} \le 1, \forall t$ (The telescope can only observe one target at a time).
+
+1. **Temporal Non-Overlap:** $$
+\sum_{i} \sum_{t'=t-d_i+1}^{t} x_{i,t'} \le 1
+$$
+
+*(The telescope can only observe one target at a time).*
+
 2. **Visibility Windows:** $x_{i,t} = 0$ if $t$ is outside the object's specific rise/set window.
 
 The atmospheric interference is modeled via a discrete-time transition matrix $P$:
-$$P = \begin{bmatrix} P(C_{t+1}=1|C_t=1) & P(C_{t+1}=0|C_t=1) \\ P(C_{t+1}=1|C_t=0) & P(C_{t+1}=0|C_t=0) \end{bmatrix}$$
+
+$$
+P = \begin{bmatrix} P(C_{t+1}=1|C_t=1) & P(C_{t+1}=0|C_t=1) \\ P(C_{t+1}=1|C_t=0) & P(C_{t+1}=0|C_t=0) \end{bmatrix}
+$$
+
+During optimization, the environment generates hundreds of probabilistic "weather futures" in $\mathcal{O}(T)$ time complexity to stress-test potential schedules.
+
+---
+
+## 🔬 Optimization Engine: Simulated Annealing
+
+A standard greedy algorithm selects the highest $w_i$ currently visible, ignoring opportunity costs and weather trajectories. This project implements a Stochastic Simulated Annealing approach to find highly robust observation sequences.
+
+The algorithm explores the search space by swapping target priorities. To escape local optima, it evaluates the change in Expected Value ($\Delta \mathbb{E}[W]$) between the current schedule and a neighbor schedule. Worse schedules are stochastically accepted based on the Metropolis-Hastings criterion:
+
+$$
+P(\text{accept}) = \exp\left(\frac{\Delta \mathbb{E}[W]}{T_{temp}}\right)
+$$
+
+As the computational temperature ($T_{temp}$) cools, the algorithm transitions from exploring risky schedules to exploiting the most robust sequence.
 
 ---
 
@@ -61,10 +89,7 @@ Tested over a 24-hour simulated horizon with heavy stochastic cloud fragmentatio
 * **Stochastic AI Yield:** 446
 * **Performance Delta:** **+9.6%**
 
-*(Visual Proof: Notice how the Baseline Heuristic repeatedly wastes time initiating observations that get "clouded out" (red), while the Stochastic AI safely navigates clear windows (green).)*
-
 ![Gantt Chart](Gantt.png) 
-*(Note: Ensure your actual image file is named correctly and uploaded to the root of your repo)*
 
 ---
 
@@ -72,7 +97,6 @@ Tested over a 24-hour simulated horizon with heavy stochastic cloud fragmentatio
 
 ### 1. Repository Structure
 ```text
-├── main_scheduler.py       # Master script containing the Environment, SA Engine, and Visualizer
-├── image_9f0ce2.png        # Generated visual output
-├── requirements.txt        # Python dependencies
+├── final.py                # Master script containing the Environment, SA Engine, and Visualizer
+├── Gantt.png               # Generated visual outputes
 └── README.md               # Project documentation
